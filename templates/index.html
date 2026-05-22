@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LakshArt AI | Neural Style Transfer Studio</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='assets/logo.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="navbar">
+            <a class="brand" href="#home" aria-label="LakshArt AI home">
+                <img src="{{ url_for('static', filename='assets/logo.png') }}" alt="LakshArt AI logo">
+                <span>
+                    <strong>LakshArt AI</strong>
+                    <small>Neural Style Transfer Studio</small>
+                </span>
+            </a>
+
+            <nav class="nav-links" aria-label="Primary">
+                <a href="#home">Home</a>
+                <a href="#transfer">Transfer</a>
+                <a href="#examples">Examples</a>
+                <a href="#faq">FAQ</a>
+                <a href="#about">About</a>
+            </nav>
+        </header>
+
+        <main>
+            <section id="home" class="hero section-frame">
+                <div class="hero-content">
+                    <span class="eyebrow">Flask + PyTorch + AdaIN</span>
+                    <h1>Transform ordinary images into AI-powered artistic creations with LakshArt AI.</h1>
+                    <p>
+                        Upload a content image and a style reference, adjust style strength, and generate stylized artwork using AdaIN-based Neural Style Transfer.
+                    </p>
+
+                    <div class="hero-actions">
+                        <a class="primary-link" href="#transfer">Start transfer</a>
+                        <a class="secondary-link" href="#examples">View examples</a>
+                    </div>
+
+                    <div class="hero-metrics" aria-label="Project highlights">
+                        <div>
+                            <strong>AdaIN</strong>
+                            <span>Adaptive feature alignment</span>
+                        </div>
+                        <div>
+                            <strong>PyTorch</strong>
+                            <span>Model inference pipeline</span>
+                        </div>
+                        <div>
+                            <strong>Flask</strong>
+                            <span>Simple browser workflow</span>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="hero-panel">
+                    <div class="panel-card">
+                        <span class="panel-label">Style Transfer Flow</span>
+                        <ol>
+                            <li>Choose a content image.</li>
+                            <li>Choose a style image.</li>
+                            <li>Adjust style strength and generate artwork.</li>
+                        </ol>
+                    </div>
+                    <div class="panel-card accent-card">
+                        <span class="panel-label">Model stack</span>
+                        <p>Pretrained VGG encoder + decoder trained for fast artistic synthesis.</p>
+                    </div>
+                </aside>
+            </section>
+
+            <section id="transfer" class="transfer-section section-frame">
+                <div class="section-heading">
+                    <span class="eyebrow">Upload / Transfer</span>
+                    <h2>Blend your content and style in one pass.</h2>
+                    <p>The workflow is simple: upload two images, adjust style strength, and generate stylized artwork instantly.</p>
+                </div>
+
+                <div class="transfer-layout">
+                    <form method="POST" enctype="multipart/form-data" class="transfer-form">
+                        {{ form.hidden_tag() }}
+
+                        {% if error %}
+                        <div class="error-banner" role="alert">{{ error }}</div>
+                        {% endif %}
+
+                        <div class="image-boxes">
+                            <div class="box">
+                                <div class="box-header">
+                                    <h3>Content Image</h3>
+                                    <p>Scene or subject to preserve.</p>
+                                </div>
+
+                                <div class="preview-frame" id="content-preview-frame">
+                                    <img
+                                        id="content-preview"
+                                        class="preview-image{% if not content_image %} is-hidden{% endif %}"
+                                        {% if content_image %}src="{{ url_for('send_image', filename=content_image) }}"{% endif %}
+                                        alt="Uploaded content image preview"
+                                    >
+                                    <div id="content-placeholder" class="placeholder{% if content_image %} is-hidden{% endif %}">Upload content image</div>
+                                </div>
+
+                                {{ form.content(class="file-control", accept="image/*", id="content-upload") }}
+                            </div>
+
+                            <div class="box">
+                                <div class="box-header">
+                                    <h3>Style Image</h3>
+                                    <p>Painting or texture reference.</p>
+                                </div>
+
+                                <div class="preview-frame" id="style-preview-frame">
+                                    <img
+                                        id="style-preview"
+                                        class="preview-image{% if not style_image %} is-hidden{% endif %}"
+                                        {% if style_image %}src="{{ url_for('send_image', filename=style_image) }}"{% endif %}
+                                        alt="Uploaded style image preview"
+                                    >
+                                    <div id="style-placeholder" class="placeholder{% if style_image %} is-hidden{% endif %}">Upload style image</div>
+                                </div>
+
+                                {{ form.style(class="file-control", accept="image/*", id="style-upload") }}
+                            </div>
+                        </div>
+
+                        <div class="slider-area">
+                            <div class="slider-topline">
+                                <label for="alpha">Style Strength</label>
+                                <span id="alpha-helper">1.0 = style heavy</span>
+                            </div>
+                            <input
+                                type="range"
+                                id="alpha"
+                                name="{{ form.alpha.name }}"
+                                class="range-control"
+                                min="0"
+                                max="1"
+                                step="0.1"
+                                value="{{ form.alpha.data if form.alpha.data is not none else 1 }}"
+                            >
+                        </div>
+
+                        <div class="button-area">
+                            {{ form.submit(class="transfer-btn") }}
+                        </div>
+                    </form>
+
+                    <aside class="transfer-notes">
+                        <div class="note-card">
+                            <h3>How it works</h3>
+                            <p>AdaIN aligns content features to the style statistics before decoding the image back into RGB space.</p>
+                        </div>
+                        <div class="note-card">
+                            <h3>Output location</h3>
+                            <p>Generated outputs are displayed below and can be downloaded directly after processing.</p>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+
+            {% if result_image %}
+            <section id="result-section" class="result section-frame">
+                <div class="section-heading">
+                    <span class="eyebrow">Result</span>
+                    <h2>Your stylized output is ready.</h2>
+                </div>
+
+                <div class="result-card">
+                    <img class="result-image" src="{{ url_for('send_image', filename=result_image) }}" alt="Stylized result image">
+                    <div class="result-actions">
+                        <a class="primary-link" href="{{ url_for('send_image', filename=result_image) }}" download>Download image</a>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            <section id="examples" class="examples section-frame">
+                <div class="section-heading">
+                    <span class="eyebrow">Examples</span>
+                    <h2>Existing project samples and generated outputs.</h2>
+                    <p>These use the example assets already included with the project.</p>
+                </div>
+
+                <div class="example-grid">
+                    <article class="example-card">
+                        <div class="example-images">
+                            <div class="example-item">
+                                <img src="{{ url_for('static', filename='assets/examples/content-1.jpg') }}" alt="Brad Pitt content image">
+                                <p class="example-label">Content</p>
+                            </div>
+                            <div class="example-item">
+                                <img src="{{ url_for('static', filename='assets/examples/style-1.jpg') }}" alt="Sketch style image">
+                                <p class="example-label">Style</p>
+                            </div>
+                            <div class="example-item">
+                                <img src="{{ url_for('static', filename='assets/examples/output-1.jpg') }}" alt="Stylized Brad Pitt output">
+                                <p class="example-label">Result</p>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="example-card">
+                        <div class="example-images">
+                            <div class="example-item">
+                                <img src="{{ url_for('static', filename='assets/examples/content-2.jpg') }}" alt="Brad Pitt content image">
+                                <p class="example-label">Content</p>
+                            </div>
+                            <div class="example-item">
+                                <img src="{{ url_for('static', filename='assets/examples/style-2.jpg') }}" alt="Picasso style image">
+                                <p class="example-label">Style</p>
+                            </div>
+                            <div class="example-item">
+                                <img src="{{ url_for('static', filename='assets/examples/output-2.jpg') }}" alt="Stylized Brad Pitt output variant">
+                                <p class="example-label">Result</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="faq" class="faq section-frame">
+                <div class="section-heading">
+                    <span class="eyebrow">FAQ</span>
+                    <h2>Project details at a glance.</h2>
+                </div>
+
+                <div class="faq-list">
+                    <details>
+                        <summary>What architecture does LakshArt AI use?</summary>
+                        <p>The project uses AdaIN (Adaptive Instance Normalization) to transfer style statistics onto content features before decoding the final image.</p>
+                    </details>
+                    <details>
+                        <summary>Why are there a pretrained decoder and VGG encoder?</summary>
+                        <p>The VGG encoder extracts deep features from the uploaded images, and the pretrained decoder reconstructs the stylized output quickly from the transformed features.</p>
+                    </details>
+                    <details>
+                        <summary>What datasets were used for training?</summary>
+                        <p>COCO Dataset 2017 was used for content representations and Painter by Numbers for artistic style learning.</p>
+                    </details>
+                    <details>
+                        <summary>What powers the web app?</summary>
+                        <p>The UI is served by Flask and the image synthesis runs through PyTorch, so the browser interaction stays simple while the model inference happens on the backend.</p>
+                    </details>
+                    <details>
+                        <summary>Can I tune how strong the style looks?</summary>
+                        <p>Yes. The Style Strength slider controls the balance between preserving content details and emphasizing artistic style.</p>
+                    </details>
+                </div>
+            </section>
+
+            <section id="about" class="about section-frame">
+                <div class="section-heading">
+                    <span class="eyebrow">About Project</span>
+                    <h2>Built as a lightweight AI-powered neural art application.</h2>
+                </div>
+
+                <div class="about-grid">
+                    <p>LakshArt AI is a Flask + PyTorch Neural Style Transfer app focused on a fast, minimal workflow: upload two images, transfer style with AdaIN, and download the generated result.</p>
+                    <p>The interface focuses on simplicity and highlights the core neural style transfer experience.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>© 2026 Built by <a href="https://github.com/lakshaybamel" target="_blank">Lakshay Bamel</a></p>
+            <hr>
+            <p>Neural Style Transfer using AdaIN</p>
+        </footer>
+    </div>
+
+    <script>
+        (function () {
+            const contentInput = document.getElementById('content-upload');
+            const styleInput = document.getElementById('style-upload');
+            const contentPreview = document.getElementById('content-preview');
+            const stylePreview = document.getElementById('style-preview');
+            const contentPlaceholder = document.getElementById('content-placeholder');
+            const stylePlaceholder = document.getElementById('style-placeholder');
+            const alphaInput = document.getElementById('alpha');
+            const alphaHelper = document.getElementById('alpha-helper');
+            const resultSection = document.getElementById('result-section');
+
+            function updatePreview(input, preview, placeholder) {
+                const file = input.files && input.files[0];
+
+                if (!file) {
+                    return;
+                }
+
+                const objectUrl = URL.createObjectURL(file);
+                preview.src = objectUrl;
+                preview.classList.remove('is-hidden');
+                placeholder.classList.add('is-hidden');
+            }
+
+            function updateAlphaHelper() {
+                const value = Number.parseFloat(alphaInput.value || '1').toFixed(1);
+                let label = 'style heavy';
+
+                if (value < '0.5') {
+                    label = 'content heavy';
+                } else if (value === '0.5') {
+                    label = 'balanced';
+                }
+
+                alphaHelper.textContent = `${value} = ${label}`;
+            }
+
+            contentInput.addEventListener('change', () => updatePreview(contentInput, contentPreview, contentPlaceholder));
+            styleInput.addEventListener('change', () => updatePreview(styleInput, stylePreview, stylePlaceholder));
+            alphaInput.addEventListener('input', updateAlphaHelper);
+
+            if (resultSection) {
+                window.requestAnimationFrame(() => {
+                    resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            }
+
+            updateAlphaHelper();
+        })();
+    </script>
+</body>
+</html>
