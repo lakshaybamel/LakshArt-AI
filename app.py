@@ -2,7 +2,6 @@ import os
 import torch
 from flask import Flask, abort, render_template, send_from_directory
 from flask_wtf import FlaskForm
-from flask_bootstrap import Bootstrap
 from werkzeug.utils import secure_filename
 from wtforms import FileField, SubmitField, FloatField, HiddenField
 
@@ -25,8 +24,6 @@ app.config["STYLE_FOLDER"] = os.path.join(app.config["UPLOAD_FOLDER"], "style")
 app.config["OUTPUT_FOLDER"] = os.path.join(app.config["UPLOAD_FOLDER"], "outputs")
 
 app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg"}
-
-Bootstrap(app)
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 os.makedirs(app.config["CONTENT_FOLDER"], exist_ok=True)
