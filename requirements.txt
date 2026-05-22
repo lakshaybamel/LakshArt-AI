@@ -16,3 +16,6 @@ tqdm
 # Deep learning framework
 torch
 torchvision
+
+# Production WSGI server
+gunicorn
